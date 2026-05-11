@@ -693,7 +693,7 @@ Renfo : ${getRenfo(S.programDay)} pompes + squats + tractions progressives
 Règles : français décontracté, 2-4 phrases max, encourage en priorité, pratique et concis.`;
   history.push({role:'user',content:msg});
   if(history.length>20)history=history.slice(-16);
-  const res=await fetch('/.netlify/functions/coach',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:history,systemPrompt:sys})});
+  const res=await fetch('/api/coach',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:history,systemPrompt:sys})});
   const data=await res.json();
   const reply=data.text||'Problème de connexion.';
   history.push({role:'assistant',content:reply});
