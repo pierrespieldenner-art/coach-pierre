@@ -383,8 +383,8 @@ const PROGRAM_START=new Date('2026-05-12');
 PROGRAM_START.setHours(0,0,0,0);
 
 // Supabase config (injected at runtime via env or hardcoded after deploy)
-const SUPABASE_URL = window.SUPABASE_URL || '';
-const SUPABASE_KEY = window.SUPABASE_KEY || '';
+const SUPABASE_URL = "";
+const SUPABASE_KEY = "";
 
 async function supabase(method, path, body) {
   if (!SUPABASE_URL || !SUPABASE_KEY) return null;
