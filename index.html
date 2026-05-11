@@ -651,7 +651,7 @@ async function addMeal(){
   inp.value='';
   const t=new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
   const meal={text:txt,t,feedback:''};S.meals.push(meal);scheduleSave();renderMeals();
-  try{const reply=await callCoach(`Repas: "${txt}". Feedback 2 phrases max pour un coureur en prépa marathon.`);meal.feedback=reply;scheduleSave();renderMeals();}catch(e){}
+  try{meal.feedback="⏳ Analyse en cours...";renderMeals();const reply=await callCoach(`Repas: "${txt}". Feedback 2 phrases max pour un coureur en prépa marathon.`);meal.feedback=reply;scheduleSave();renderMeals();}catch(e){meal.feedback="❌ "+e.message;renderMeals();}
 }
 function renderMeals(){
   const el=document.getElementById('mealEntries');
