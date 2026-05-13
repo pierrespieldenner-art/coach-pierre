@@ -769,6 +769,7 @@ function addCoachMsg(txt){const t=new Date().toLocaleTimeString('fr-FR',{hour:'2
 function showTyping(on){document.getElementById('typing').classList.toggle('on',on);document.getElementById('msgs').scrollTop=99999;}
 function useSug(el){document.getElementById('chatIn').value=el.textContent;showPanel('coach');send();}
 function onKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}}
+let recog=null;function toggleMic(){if(!("webkitSpeechRecognition"in window||"SpeechRecognition"in window)){toast("Micro non supporté");return;}if(recog){recog.stop();recog=null;document.getElementById("micBtn").textContent="🎤";document.getElementById("micBtn").style.background="var(--surface2)";return;}const SR=window.SpeechRecognition||window.webkitSpeechRecognition;recog=new SR();recog.lang="fr-FR";recog.continuous=false;recog.interimResults=false;recog.onstart=()=>{document.getElementById("micBtn").textContent="🔴";document.getElementById("micBtn").style.background="#ff4d0040";};recog.onresult=(e)=>{const txt=e.results[0][0].transcript;document.getElementById("chatIn").value=txt;recog=null;document.getElementById("micBtn").textContent="🎤";document.getElementById("micBtn").style.background="var(--surface2)";send();};recog.onerror=()=>{recog=null;document.getElementById("micBtn").textContent="🎤";document.getElementById("micBtn").style.background="var(--surface2)";toast("Erreur micro");};recog.start();}
 function resize(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,90)+'px';}
 
 function showPanel(id){
