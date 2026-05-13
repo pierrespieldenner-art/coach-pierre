@@ -588,6 +588,7 @@ function getHabits(date){
     {id:'alcool',icon:'🚫',name:'Zéro alcool',desc:'Impact testo + récupération running',time:'—',tag:'food'},
     {id:'sommeil',icon:'😴',name:'7h+ de sommeil',desc:'Heure de coucher dans Bilan',time:'—',tag:'mind'},
     {id:'calme',icon:'🌅',name:'10min calme matin',desc:'Pas d\'écran avant de courir',time:'10min',tag:'mind'},
+    {id:'running',icon:'🏃',name:kiprun?'Séance Kiprun faite · '+kiprun.nom:'Repos running',desc:kiprun?kiprun.jour+' · '+kiprun.dur+' · Départ 6h30':'Lundi/Jeudi/Samedi · Récup active',time:kiprun?kiprun.dur:'—',tag:'body'},
     {id:'renfo',icon:'💪',name:`Renfo (${renfo} pompes)`,desc:isSunday?'Après sortie longue · Léger':isIntense?'Ce soir · Pompes + squats + tractions':'Pompes + squats + fentes + tractions',time:isSunday||isIntense?'15min soir':'20-25min',tag:'body'},
   ];
 }
