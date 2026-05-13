@@ -622,7 +622,7 @@ function initHeader(){
   const now=new Date();
   const h=now.getHours();
   const moment=h<12?'MATIN':h<18?'JOURNÉE':'SOIRÉE';
-  document.getElementById('hMoment').textContent=moment;
+  document.getElementById('hMoment').textContent=moment;document.getElementById('hBonne').textContent=h<12?"BON":"BONNE";
   document.getElementById('hDate').textContent=now.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
   document.getElementById('hTag').textContent=`PROGRAMME · JOUR ${S.programDay+1}`;
   document.getElementById('initT').textContent=now.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
