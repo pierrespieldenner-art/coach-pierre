@@ -493,8 +493,7 @@ const KIPRUN_IMAGES = {
   default: 'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=800&q=80'
 };
 
-const SUPABASE_URL='';
-const SUPABASE_KEY='';
+let SUPABASE_URL='';let SUPABASE_KEY='';
 
 async function supabaseReq(method,path,body){
   if(!SUPABASE_URL||!SUPABASE_KEY)return null;
@@ -891,7 +890,7 @@ function showPanel(id){
 }
 function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2500);}
 
-async function init(){
+async function init(){try{const cfg=await fetch("/api/config").then(r=>r.json());SUPABASE_URL=cfg.supabaseUrl||'';SUPABASE_KEY=cfg.supabaseKey||'';}catch(e){}
   load();initHeader();
   const loaded=await loadFromSupabase();
   if(loaded)setSyncStatus('ok');
