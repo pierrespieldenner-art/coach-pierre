@@ -890,10 +890,10 @@ function showPanel(id){
 }
 function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2500);}
 
-async function init(){try{const cfg=await fetch("/api/config").then(r=>r.json());SUPABASE_URL=cfg.supabaseUrl||'';SUPABASE_KEY=cfg.supabaseKey||'';}catch(e){}
+async function init(){try{const cfg=await fetch('/api/config').then(r=>r.json());SUPABASE_URL=cfg.supabaseUrl||'';SUPABASE_KEY=cfg.supabaseKey||'';}catch(e){}
   load();initHeader();
   const loaded=await loadFromSupabase();
-  if(loaded)setSyncStatus('ok');
+  if(loaded){setSyncStatus('ok');renderToday();renderW();renderDrinks();renderMeals();initSleep();['jambes','energie','stress','douleurs'].forEach(k=>renderRating(k));updateProgress();}
   renderToday();renderW();renderDrinks();renderMeals();initSleep();initWeight();
   Object.entries(S.stretch).forEach(([k,v])=>{if(v){document.getElementById(`sb-${k}`).textContent='✓ FAIT';document.getElementById(`sb-${k}`).classList.add('done');document.getElementById(`so-${k}`).classList.add('done-overlay');}});
   ['jambes','energie','stress','douleurs'].forEach(k=>renderRating(k));
