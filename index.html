@@ -438,6 +438,13 @@ button,textarea,input{font-family:'Inter',sans-serif;}
       <div class="sug" onclick="useSug(this)">Conseil pour demain</div>
       <div class="sug" onclick="useSug(this)">J'ai fait ma séance</div>
     </div>
+    <div style="margin-bottom:8px;flex-shrink:0">
+      <label style="display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:12px;border:1px solid var(--border);background:var(--surface);cursor:pointer;font-size:11px;font-weight:600;color:var(--muted);">
+        <span style="font-size:16px">&#128206;</span>
+        <span>Analyser ma seance GPX</span>
+        <input type="file" id="gpxInput" accept=".gpx" style="display:none" onchange="analyzeGPX(this)">
+      </label>
+    </div>
     <div class="msgs" id="msgs">
       <div class="msg c">
         <div class="av">🤖</div>
@@ -890,6 +897,37 @@ function showPanel(id){
 }
 function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2500);}
 
+async function analyzeGPX(input){
+  const file=input.files[0];if(!file)return;
+  toast("Analyse de la seance...");
+  const text=await file.text();
+  const parser=new DOMParser();
+  const xml=parser.parseFromString(text,"text/xml");
+  const trkpts=xml.querySelectorAll("trkpt");
+  if(!trkpts.length){toast("Fichier GPX invalide");return;}
+  let dist=0;const pts=Array.from(trkpts);
+  for(let i=1;i<pts.length;i++){
+    const lat1=parseFloat(pts[i-1].getAttribute("lat"))*Math.PI/180;
+    const lat2=parseFloat(pts[i].getAttribute("lat"))*Math.PI/180;
+    const dLat=lat2-lat1;
+    const dLon=(parseFloat(pts[i].getAttribute("lon"))-parseFloat(pts[i-1].getAttribute("lon")))*Math.PI/180;
+    const a=Math.sin(dLat/2)**2+Math.cos(lat1)*Math.cos(lat2)*Math.sin(dLon/2)**2;
+    dist+=6371*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+  }
+  const times=pts.map(p=>p.querySelector("time")).filter(Boolean);
+  let duration=0;
+  if(times.length>=2)duration=(new Date(times[times.length-1].textContent)-new Date(times[0].textContent))/1000/60;
+  const hrVals=Array.from(xml.querySelectorAll("hr,heartrate")).map(e=>parseInt(e.textContent)).filter(v=>v>0);
+  const avgHR=hrVals.length?Math.round(hrVals.reduce((a,b)=>a+b)/hrVals.length):null;
+  const km=dist.toFixed(2);
+  const mins=Math.floor(duration);
+  const allure=duration>0?Math.floor(duration/dist)+"'"+String(Math.round((duration/dist%1)*60)).padStart(2,"0")+"''":"—";
+  const kiprun=getKiprun(new Date());
+  const msg="Seance terminee "+km+"km en "+mins+"min allure "+allure+(avgHR?" FC moy "+avgHR+"bpm":"")+(kiprun?" Objectif etait "+kiprun.nom+" ("+kiprun.dur+")":" ")+". Analyse ma seance.";
+  showPanel("coach");
+  document.getElementById("chatIn").value=msg;
+  send();input.value="";
+}
 async function init(){try{const cfg=await fetch('/api/config').then(r=>r.json());SUPABASE_URL=cfg.supabaseUrl||'';SUPABASE_KEY=cfg.supabaseKey||'';SUPABASE_READY=true;}catch(e){}
   load();initHeader();
   const loaded=await loadFromSupabase();
