@@ -506,7 +506,7 @@ async function supabaseReq(method,path,body){
 async function syncToSupabase(){
   setSyncStatus('loading');
   const today=new Date().toISOString().slice(0,10);
-  const result=await supabaseReq('POST','daily_logs',{date:today,water:S.water,drinks:S.drinks,meals:S.meals,habits:S.habits,ratings:S.ratings,sleep:S.sleep,stretch:S.stretch,evening:S.evening,weight:S.weight,updated_at:new Date().toISOString()});
+  const result=await supabaseReq('POST','daily_logs?on_conflict=date',{date:today,water:S.water,drinks:S.drinks,meals:S.meals,habits:S.habits,ratings:S.ratings,sleep:S.sleep,stretch:S.stretch,evening:S.evening,weight:S.weight,updated_at:new Date().toISOString()});
   setSyncStatus(result?'ok':'off');
 }
 async function loadFromSupabase(){
