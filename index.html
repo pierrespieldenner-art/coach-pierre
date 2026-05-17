@@ -311,6 +311,11 @@ button,textarea,input{font-family:'Inter',sans-serif;}
   <div id="kiprunSection"></div>
   <div class="sec">Habitudes</div>
   <div id="habitsList"></div>
+  <div style="margin-top:16px">
+    <button id="notifBtn" onclick="requestNotifications()" style="width:100%;padding:12px;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:var(--muted);font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
+      <span>🔕</span> Activer les notifications
+    </button>
+  </div>
 </div>
 
 <!-- WATER -->
@@ -1110,6 +1115,50 @@ function startNoteVoice(){
   noteRecog.start();
 }
 
+async function registerSW(){
+  if(!("serviceWorker"in navigator))return;
+  try{
+    const reg = await navigator.serviceWorker.register('/sw.js');
+    console.log('SW registered');
+    window._swReg = reg;
+  }catch(e){console.log('SW error',e);}
+}
+
+async function requestNotifications(){
+  if(!("Notification"in window)){toast("Notifications non supportées");return;}
+  const perm = await Notification.requestPermission();
+  if(perm==="granted"){
+    toast("✅ Notifications activées !");
+    scheduleLocalNotifications();
+    document.getElementById("notifBtn").textContent="🔔 Activées";
+    document.getElementById("notifBtn").style.background="var(--neon)";
+    document.getElementById("notifBtn").style.color="#000";
+    localStorage.setItem("notif","1");
+  } else {
+    toast("❌ Notifications refusées");
+  }
+}
+
+function scheduleLocalNotifications(){
+  if(!window._swReg)return;
+  // Test immediate notification
+  window._swReg.showNotification("🏃 Coach Pierre",{
+    body:"Notifications activées ! Je te tiendrai au courant toute la journée 💪",
+    icon:"/icon.png",
+    vibrate:[200,100,200]
+  });
+}
+
+function checkNotifStatus(){
+  const btn = document.getElementById("notifBtn");
+  if(!btn)return;
+  if(Notification.permission==="granted"){
+    btn.textContent="🔔 Activées";
+    btn.style.background="var(--neon)";
+    btn.style.color="#000";
+  }
+}
+
 async function init(){try{const cfg=await fetch('/api/config').then(r=>r.json());SUPABASE_URL=cfg.supabaseUrl||'';SUPABASE_KEY=cfg.supabaseKey||'';SUPABASE_READY=true;}catch(e){}
   load();initHeader();
   const loaded=await loadFromSupabase();
@@ -1118,6 +1167,8 @@ async function init(){try{const cfg=await fetch('/api/config').then(r=>r.json())
   Object.entries(S.stretch).forEach(([k,v])=>{if(v){document.getElementById(`sb-${k}`).textContent='✓ FAIT';document.getElementById(`sb-${k}`).classList.add('done');document.getElementById(`so-${k}`).classList.add('done-overlay');}});
   ['jambes','energie','stress','douleurs'].forEach(k=>renderRating(k));
   updateProgress();
+  registerSW();
+  setTimeout(checkNotifStatus,1000);
 }
 init();
 </script>
