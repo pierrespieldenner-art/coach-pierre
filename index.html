@@ -296,6 +296,7 @@ button,textarea,input{font-family:'Inter',sans-serif;}
 
 <!-- NAV -->
 <div class="nav">
+  <button class="nav-btn" onclick="showPanel('profil')">👤 Profil</button>
   <button class="nav-btn active" onclick="showPanel('today')">Today</button>
   <button class="nav-btn" onclick="showPanel('water')">💧 Eau</button>
   <button class="nav-btn" onclick="showPanel('stretch')">🧘 Étir.</button>
@@ -308,6 +309,30 @@ button,textarea,input{font-family:'Inter',sans-serif;}
 </div>
 
 <!-- TODAY -->
+<div class="panel" id="panel-profil">
+  <div class="sec">Mon profil</div>
+  <div style="background:var(--surface);border-radius:20px;padding:20px;margin-bottom:12px;border:1px solid var(--border);text-align:center">
+    <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--fire),var(--fire2));margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:36px">🏃</div>
+    <div style="font-family:'Bebas Neue';font-size:32px;letter-spacing:2px">PIERRE</div>
+    <div style="font-size:12px;color:var(--muted);margin-top:2px">Berlin · Marathon Berlin 2026</div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px" id="profilStats"></div>
+  <div class="sec">Objectifs</div>
+  <div style="background:var(--surface);border-radius:16px;padding:16px;border:1px solid var(--border)">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <span style="font-size:13px;font-weight:600">🏁 Marathon Berlin</span>
+      <span style="font-family:'Bebas Neue';font-size:18px;color:var(--electric)" id="profilDays">—</span>
+    </div>
+    <div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden">
+      <div id="profilProgBar" style="height:100%;background:linear-gradient(90deg,var(--fire),var(--fire2));border-radius:3px;transition:width 0.8s ease;width:0%"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;margin-top:6px">
+      <span style="font-size:9px;color:var(--muted)">12 mai 2026</span>
+      <span style="font-size:9px;color:var(--muted)" id="profilPct">0%</span>
+      <span style="font-size:9px;color:var(--muted)">26 sept 2026</span>
+    </div>
+  </div>
+</div>
 <div class="panel active" id="panel-today">
   <div id="kiprunSection"></div>
   <div class="sec">Habitudes</div>
@@ -1006,6 +1031,7 @@ function showPanel(id){
   if(id==='history')renderHistory();
   if(id==='notes'){renderNotes();setNoteCategory('general');}
   if(id==='programme')renderProgramme();
+  if(id==='profil')renderProfil();
 }
 function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2500);}
 
@@ -1169,6 +1195,45 @@ function renderProgramme(){
     const current=el.querySelector('[style*="EN COURS"]');
     if(current)current.closest('[style*="border-radius:16px"]').scrollIntoView({behavior:'smooth',block:'center'});
   },300);
+}
+
+async function renderProfil(){
+  const rows = await loadHistory();
+  const totalDays = rows.length;
+  const totalWater = rows.reduce((a,r)=>a+(r.water||0),0);
+  const totalHabits = rows.reduce((a,r)=>a+Object.values(r.habits||{}).filter(Boolean).length,0);
+  const runDays = rows.filter(r=>r.habits&&r.habits.running).length;
+  const avgSleep = rows.filter(r=>r.sleep&&r.sleep.dur).length ?
+    Math.round(rows.filter(r=>r.sleep&&r.sleep.dur).reduce((a,r)=>a+parseFloat(r.sleep.dur),0)/rows.filter(r=>r.sleep&&r.sleep.dur).length*10)/10 : 0;
+
+  document.getElementById('profilStats').innerHTML = `
+    <div style="background:var(--surface);border-radius:14px;padding:14px;border:1px solid var(--border);text-align:center">
+      <div style="font-family:'Bebas Neue';font-size:32px;color:var(--fire);line-height:1">${S.programDay+1}</div>
+      <div style="font-size:9px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-top:2px">Jour programme</div>
+    </div>
+    <div style="background:var(--surface);border-radius:14px;padding:14px;border:1px solid var(--border);text-align:center">
+      <div style="font-family:'Bebas Neue';font-size:32px;color:var(--electric);line-height:1">${runDays}</div>
+      <div style="font-size:9px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-top:2px">Séances faites</div>
+    </div>
+    <div style="background:var(--surface);border-radius:14px;padding:14px;border:1px solid var(--border);text-align:center">
+      <div style="font-family:'Bebas Neue';font-size:32px;color:var(--neon);line-height:1">${totalHabits}</div>
+      <div style="font-size:9px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-top:2px">Habitudes cochées</div>
+    </div>
+    <div style="background:var(--surface);border-radius:14px;padding:14px;border:1px solid var(--border);text-align:center">
+      <div style="font-family:'Bebas Neue';font-size:32px;color:var(--purple);line-height:1">${avgSleep||'—'}</div>
+      <div style="font-size:9px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-top:2px">Moy. sommeil (h)</div>
+    </div>`;
+
+  const now = new Date();
+  const start = new Date('2026-05-12');
+  const end = new Date('2026-09-26');
+  const total = end - start;
+  const elapsed = now - start;
+  const pct = Math.min(100, Math.round(elapsed/total*100));
+  const daysLeft = Math.ceil((end-now)/86400000);
+  document.getElementById('profilDays').textContent = daysLeft + 'j';
+  document.getElementById('profilProgBar').style.width = pct + '%';
+  document.getElementById('profilPct').textContent = pct + '%';
 }
 
 async function registerSW(){
