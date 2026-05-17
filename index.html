@@ -259,6 +259,7 @@ button,textarea,input{font-family:'Inter',sans-serif;}
 .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(80px);background:linear-gradient(135deg,var(--fire),var(--fire2));color:#fff;font-size:12px;font-weight:700;padding:11px 20px;border-radius:24px;transition:transform 0.35s cubic-bezier(0.34,1.56,0.64,1);z-index:200;pointer-events:none;box-shadow:0 8px 24px rgba(255,69,0,0.4);}
 .toast.show{transform:translateX(-50%) translateY(0);}
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 </head>
 <body>
 
@@ -411,6 +412,12 @@ button,textarea,input{font-family:'Inter',sans-serif;}
 <!-- HISTORY -->
 <div class="panel" id="panel-history">
   <div class="sec">Historique 90 jours</div>
+  <div id="streakSection" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px"></div>
+  <div class="sec">Progression</div>
+  <div style="background:var(--surface);border-radius:16px;padding:16px;margin-bottom:16px;border:1px solid var(--border)">
+    <canvas id="progressChart" height="120"></canvas>
+  </div>
+  <div class="sec">Jours</div>
   <div id="historyList"><div style="font-size:13px;color:var(--muted);text-align:center;padding:40px 0">Chargement...</div></div>
 </div>
 
@@ -811,8 +818,68 @@ async function renderHistory(){
   const el=document.getElementById('historyList');
   el.innerHTML='<div style="font-size:13px;color:var(--muted);text-align:center;padding:40px 0">Chargement...</div>';
   const rows=await loadHistory();
-  if(!rows.length){el.innerHTML='<div style="font-size:13px;color:var(--muted);text-align:center;padding:40px 0">Aucune donnée encore — commence demain !</div>';return;}
-  el.innerHTML=rows.map(r=>{
+  if(!rows.length){
+    el.innerHTML='<div style="font-size:13px;color:var(--muted);text-align:center;padding:40px 0">Aucune donnée encore — commence demain !</div>';
+    return;
+  }
+
+  // STREAKS
+  let streak=0;
+  const sorted=[...rows].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  for(const r of sorted){
+    const habits=r.habits?Object.values(r.habits).filter(Boolean).length:0;
+    if(habits>=4)streak++;
+    else break;
+  }
+  const totalDays=rows.length;
+  const avgWater=Math.round(rows.reduce((a,r)=>a+(r.water||0),0)/totalDays*10)/10;
+  const avgEnergie=Math.round(rows.reduce((a,r)=>a+((r.ratings&&r.ratings.energie)||0),0)/totalDays*10)/10;
+
+  document.getElementById('streakSection').innerHTML=`
+    <div style="background:var(--surface);border-radius:14px;padding:14px;border:1px solid var(--border);text-align:center">
+      <div style="font-family:'Bebas Neue';font-size:36px;color:var(--fire);line-height:1">${streak}</div>
+      <div style="font-size:9px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-top:2px">🔥 Série</div>
+    </div>
+    <div style="background:var(--surface);border-radius:14px;padding:14px;border:1px solid var(--border);text-align:center">
+      <div style="font-family:'Bebas Neue';font-size:36px;color:var(--electric);line-height:1">${avgWater}</div>
+      <div style="font-size:9px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-top:2px">💧 Moy. eau</div>
+    </div>
+    <div style="background:var(--surface);border-radius:14px;padding:14px;border:1px solid var(--border);text-align:center">
+      <div style="font-family:'Bebas Neue';font-size:36px;color:var(--neon);line-height:1">${avgEnergie}</div>
+      <div style="font-size:9px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-top:2px">⚡ Moy. énergie</div>
+    </div>`;
+
+  // CHART
+  const last14=[...rows].sort((a,b)=>new Date(a.date)-new Date(b.date)).slice(-14);
+  const labels=last14.map(r=>new Date(r.date).toLocaleDateString('fr-FR',{day:'numeric',month:'short'}));
+  const waterData=last14.map(r=>r.water||0);
+  const energieData=last14.map(r=>(r.ratings&&r.ratings.energie)||0);
+
+  const ctx=document.getElementById('progressChart').getContext('2d');
+  if(window._chart)window._chart.destroy();
+  window._chart=new Chart(ctx,{
+    type:'line',
+    data:{
+      labels,
+      datasets:[
+        {label:'Eau',data:waterData,borderColor:'#00d4ff',backgroundColor:'rgba(0,212,255,0.1)',tension:0.4,fill:true,yAxisID:'y'},
+        {label:'Énergie',data:energieData,borderColor:'#39ff14',backgroundColor:'rgba(57,255,20,0.1)',tension:0.4,fill:true,yAxisID:'y2'}
+      ]
+    },
+    options:{
+      responsive:true,
+      interaction:{mode:'index',intersect:false},
+      plugins:{legend:{labels:{color:'#666',font:{size:10}}}},
+      scales:{
+        x:{ticks:{color:'#555',font:{size:9}},grid:{color:'#222'}},
+        y:{min:0,max:9,ticks:{color:'#00d4ff',font:{size:9}},grid:{color:'#222'},title:{display:true,text:'Eau',color:'#00d4ff',font:{size:9}}},
+        y2:{min:0,max:5,position:'right',ticks:{color:'#39ff14',font:{size:9}},grid:{display:false},title:{display:true,text:'Énergie',color:'#39ff14',font:{size:9}}}
+      }
+    }
+  });
+
+  // HISTORY LIST
+  el.innerHTML=sorted.map(r=>{
     const habits=r.habits?Object.values(r.habits).filter(Boolean).length:0;
     const stretch=r.stretch?Object.values(r.stretch).filter(Boolean).length:0;
     const dateStr=new Date(r.date).toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'});
