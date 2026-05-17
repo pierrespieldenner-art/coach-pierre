@@ -828,12 +828,27 @@ async function saveEvening(){
 }
 function renderReminders(){
   const el=document.getElementById('remindersSection');
-  const items=[];
-  if(!S.complAchetes)items.push('🛒 Acheter les compléments (iHerb ou pharmacie)');
+  let html='';
+  if(!S.complAchetes)html+=`<div class="card" style="border-left:2px solid var(--fire2);padding:12px 14px"><div style="font-size:13px;font-weight:600">🛒 Acheter les compléments (iHerb ou pharmacie)</div></div>`;
   const tom=new Date();tom.setDate(tom.getDate()+1);
   const tk=getKiprun(tom);
-  if(tk)items.push(`🏃 Demain : ${tk.nom} (${tk.dur}) · Départ 6h30`);
-  el.innerHTML=items.length?items.map(i=>`<div class="card" style="border-left:2px solid var(--fire2);padding:12px 14px"><div style="font-size:13px;font-weight:600">${i}</div></div>`).join(''):'<div class="card"><div style="font-size:13px;color:var(--muted)">Tout est bon pour demain ✅</div></div>';
+  if(tk){
+    // Build Google Calendar URL
+    const start=new Date(tom);start.setHours(6,30,0);
+    const end=new Date(tom);
+    const durParts=tk.dur.match(/(\d+)h(\d+)?/);
+    const durMins=durParts?(parseInt(durParts[1]||0)*60+parseInt(durParts[2]||0)):60;
+    end.setHours(6,30+durMins,0);
+    const fmt=d=>d.toISOString().replace(/[-:]/g,'').split('.')[0]+'Z';
+    const gcalUrl='https://calendar.google.com/calendar/render?action=TEMPLATE&text='+encodeURIComponent('🏃 Kiprun · '+tk.nom)+'&dates='+fmt(start)+'/'+fmt(end)+'&details='+encodeURIComponent('Séance Kiprun S'+tk.s+' · '+tk.type+'\nObjectif : '+tk.nom+' ('+tk.dur+')\nDépart 6h30');
+    html+=`<div class="card" style="border-left:2px solid var(--fire2);padding:12px 14px">
+      <div style="font-size:13px;font-weight:600;margin-bottom:8px">🏃 Demain : ${tk.nom} (${tk.dur})</div>
+      <a href="${gcalUrl}" target="_blank" style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:linear-gradient(135deg,var(--fire),var(--fire2));color:#fff;border-radius:10px;font-size:12px;font-weight:700;text-decoration:none">
+        <span>📅</span> Ajouter à Google Agenda
+      </a>
+    </div>`;
+  }
+  el.innerHTML=html||'<div class="card"><div style="font-size:13px;color:var(--muted)">Tout est bon pour demain ✅</div></div>';
 }
 
 let history=[];
