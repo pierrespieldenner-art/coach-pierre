@@ -301,6 +301,7 @@ button,textarea,input{font-family:'Inter',sans-serif;}
   <button class="nav-btn" onclick="showPanel('stretch')">🧘 Étir.</button>
   <button class="nav-btn" onclick="showPanel('body')">📊 Bilan</button>
   <button class="nav-btn" onclick="showPanel('history')">📅 Historique</button>
+  <button class="nav-btn" onclick="showPanel('notes')">📝 Notes</button>
   <button class="nav-btn" onclick="showPanel('evening')">🌙 Soir</button>
   <button class="nav-btn" onclick="showPanel('coach')">🔥 Coach</button>
 </div>
@@ -422,6 +423,23 @@ button,textarea,input{font-family:'Inter',sans-serif;}
 </div>
 
 <!-- SOIR -->
+<div class="panel" id="panel-notes">
+  <div class="sec">Notes &amp; listes</div>
+  <div class="card">
+    <div style="display:flex;gap:8px;margin-bottom:10px">
+      <input type="text" id="noteInput" placeholder="Ajouter une note..." style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;color:var(--text);font-size:13px;outline:none;" onkeydown="if(event.key==='Enter')addNote()">
+      <button onclick="addNote()" style="padding:10px 14px;background:linear-gradient(135deg,var(--fire),var(--fire2));color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;">+</button>
+      <button onclick="startNoteVoice()" id="noteVoiceBtn" style="padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;font-size:16px;cursor:pointer;">🎤</button>
+    </div>
+    <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap">
+      <button onclick="setNoteCategory('liste')" id="cat-liste" style="padding:4px 10px;border-radius:20px;border:1px solid var(--border);background:var(--surface2);font-size:10px;font-weight:700;color:var(--muted);cursor:pointer;">🛒 Liste courses</button>
+      <button onclick="setNoteCategory('idee')" id="cat-idee" style="padding:4px 10px;border-radius:20px;border:1px solid var(--border);background:var(--surface2);font-size:10px;font-weight:700;color:var(--muted);cursor:pointer;">💡 Idée</button>
+      <button onclick="setNoteCategory('rappel')" id="cat-rappel" style="padding:4px 10px;border-radius:20px;border:1px solid var(--border);background:var(--surface2);font-size:10px;font-weight:700;color:var(--muted);cursor:pointer;">⏰ Rappel</button>
+      <button onclick="setNoteCategory('general')" id="cat-general" style="padding:4px 10px;border-radius:20px;border:1px solid var(--border);background:var(--surface2);font-size:10px;font-weight:700;color:var(--muted);cursor:pointer;">📌 Général</button>
+    </div>
+    <div id="notesList"><div style="font-size:12px;color:var(--muted);text-align:center;padding:20px">Aucune note</div></div>
+  </div>
+</div>
 <div class="panel" id="panel-evening">
   <div class="sec">Fin de journée</div>
   <div class="card">
@@ -976,6 +994,7 @@ function showPanel(id){
   document.querySelectorAll('.nav-btn').forEach(b=>{if(b.textContent.toLowerCase().includes(map[id]))b.classList.add('active');});
   if(id==='evening')renderReminders();
   if(id==='history')renderHistory();
+  if(id==='notes'){renderNotes();setNoteCategory('general');}
 }
 function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2500);}
 
@@ -1010,6 +1029,87 @@ async function analyzeGPX(input){
   document.getElementById("chatIn").value=msg;
   send();input.value="";
 }
+let currentNoteCategory = 'general';
+const NOTES_KEY = 'pierre_notes_v1';
+
+function setNoteCategory(cat){
+  currentNoteCategory = cat;
+  ['liste','idee','rappel','general'].forEach(c=>{
+    const btn = document.getElementById('cat-'+c);
+    if(!btn)return;
+    btn.style.background = c===cat ? 'var(--fire)' : 'var(--surface2)';
+    btn.style.color = c===cat ? '#fff' : 'var(--muted)';
+    btn.style.borderColor = c===cat ? 'var(--fire)' : 'var(--border)';
+  });
+}
+
+function loadNotes(){
+  return JSON.parse(localStorage.getItem(NOTES_KEY)||'[]');
+}
+function saveNotes(notes){
+  localStorage.setItem(NOTES_KEY, JSON.stringify(notes));
+}
+
+function addNote(){
+  const inp = document.getElementById('noteInput');
+  const txt = inp.value.trim();
+  if(!txt) return;
+  inp.value = '';
+  const notes = loadNotes();
+  const catEmoji = {liste:'🛒',idee:'💡',rappel:'⏰',general:'📌'};
+  notes.unshift({id:Date.now(),text:txt,cat:currentNoteCategory,emoji:catEmoji[currentNoteCategory],done:false,created:new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})});
+  saveNotes(notes);
+  renderNotes();
+  toast('📝 Note ajoutée');
+}
+
+function toggleNote(id){
+  const notes = loadNotes();
+  const n = notes.find(n=>n.id===id);
+  if(n) n.done = !n.done;
+  saveNotes(notes);
+  renderNotes();
+}
+
+function deleteNote(id){
+  const notes = loadNotes().filter(n=>n.id!==id);
+  saveNotes(notes);
+  renderNotes();
+}
+
+function renderNotes(){
+  const notes = loadNotes();
+  const el = document.getElementById('notesList');
+  if(!el) return;
+  if(!notes.length){el.innerHTML='<div style="font-size:12px;color:var(--muted);text-align:center;padding:20px">Aucune note</div>';return;}
+  el.innerHTML = notes.map(n=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">
+      <div onclick="toggleNote(${n.id})" style="width:20px;height:20px;border-radius:5px;border:1.5px solid ${n.done?'var(--neon)':'var(--border)'};background:${n.done?'var(--neon)':'transparent'};cursor:pointer;flex-shrink:0;position:relative">
+        ${n.done?'<div style="position:absolute;top:3px;left:5px;width:6px;height:9px;border:2px solid #000;border-top:none;border-left:none;transform:rotate(45deg)"></div>':''}
+      </div>
+      <span style="font-size:14px">${n.emoji}</span>
+      <div style="flex:1;font-size:13px;${n.done?'text-decoration:line-through;color:var(--muted)':''}">${n.text}</div>
+      <span style="font-size:9px;color:var(--muted)">${n.created}</span>
+      <button onclick="deleteNote(${n.id})" style="background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:0">×</button>
+    </div>`).join('');
+}
+
+let noteRecog = null;
+function startNoteVoice(){
+  if(!('webkitSpeechRecognition'in window||'SpeechRecognition'in window)){toast('Micro non supporté');return;}
+  const btn = document.getElementById('noteVoiceBtn');
+  if(noteRecog){noteRecog.stop();noteRecog=null;btn.textContent='🎤';return;}
+  const SR = window.SpeechRecognition||window.webkitSpeechRecognition;
+  noteRecog = new SR();noteRecog.lang='fr-FR';noteRecog.continuous=false;noteRecog.interimResults=false;
+  noteRecog.onstart=()=>btn.textContent='🔴';
+  noteRecog.onresult=(e)=>{
+    document.getElementById('noteInput').value=e.results[0][0].transcript;
+    noteRecog=null;btn.textContent='🎤';addNote();
+  };
+  noteRecog.onerror=()=>{noteRecog=null;btn.textContent='🎤';};
+  noteRecog.start();
+}
+
 async function init(){try{const cfg=await fetch('/api/config').then(r=>r.json());SUPABASE_URL=cfg.supabaseUrl||'';SUPABASE_KEY=cfg.supabaseKey||'';SUPABASE_READY=true;}catch(e){}
   load();initHeader();
   const loaded=await loadFromSupabase();
