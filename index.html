@@ -845,20 +845,28 @@ async function loadHistory(){
 function setSyncStatus(s){const el=document.getElementById('syncDot');el.className='sync-dot';if(s==='ok')el.classList.add('ok');else if(s==='loading')el.classList.add('loading');}
 
 // ============ PLAN ENGINE ============
-function getTodaySession(){
+function getCurrentWeek(){
   if(!userProfile||!userProfile.plan||!userProfile.plan.semaines)return null;
-  const today=new Date();
-  const dayNames=['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'];
-  const todayName=dayNames[today.getDay()];
-  // Find current week based on start date or week 1
   const startDate=userProfile.created_at?new Date(userProfile.created_at):new Date();
-  const weekNum=Math.floor((today-startDate)/86400000/7);
+  const weekNum=Math.floor((new Date()-startDate)/86400000/7);
   const semaines=userProfile.plan.semaines;
-  const semaine=semaines[Math.min(weekNum,semaines.length-1)]||semaines[0];
+  return semaines[Math.min(weekNum,semaines.length-1)]||semaines[0];
+}
+
+function getTodaySession(){
+  const semaine=getCurrentWeek();
   if(!semaine||!semaine.seances)return null;
+  const dayNames=['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'];
+  const todayName=dayNames[new Date().getDay()];
   const seance=semaine.seances.find(s=>s.jour===todayName);
   if(!seance)return null;
   return{...seance,s:semaine.s,type:semaine.type,isLong:seance.nom.toLowerCase().includes('long')||seance.dur.includes('1h')};
+}
+
+function getWeekSessions(){
+  const semaine=getCurrentWeek();
+  if(!semaine||!semaine.seances)return[];
+  return semaine.seances.map(s=>({...s,s:semaine.s,type:semaine.type}));
 }
 
 // ============ HEADER ============
@@ -922,14 +930,34 @@ function getRenfo(){
 
 function renderToday(){
   const session=getTodaySession();
+  const weekSessions=getWeekSessions();
   const el=document.getElementById('kiprunSection');
   const imgs={intervals:'https://images.unsplash.com/photo-1544216428-3e06d50bcd13?w=800&q=80',long:'https://images.unsplash.com/photo-1502904550040-7534597429ae?w=800&q=80',default:'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=800&q=80'};
+  const semaine=getCurrentWeek();
+  let html='';
   if(session){
     const img=session.nom.includes('×')||session.nom.toLowerCase().includes('fractionné')?imgs.intervals:session.isLong?imgs.long:imgs.default;
-    el.innerHTML=`<div class="sec">Séance du jour</div><div class="kiprun-hero"><div class="kiprun-hero-img" style="background-image:url('${img}')"></div><div class="kiprun-hero-overlay"></div><div class="kiprun-hero-top"></div><div class="kiprun-hero-content"><div class="kiprun-badges"><span class="k-badge blue">SEMAINE ${session.s}</span><span class="k-badge fire">${(session.type||'').toUpperCase()}</span></div><div class="kiprun-bottom"><div><div class="kiprun-name">${session.nom}</div><div class="kiprun-sub">${session.desc||''}</div></div><div class="kiprun-dur">${session.dur}</div></div></div></div>`;
+    html+=`<div class="sec">Séance du jour</div><div class="kiprun-hero"><div class="kiprun-hero-img" style="background-image:url('${img}')"></div><div class="kiprun-hero-overlay"></div><div class="kiprun-hero-top"></div><div class="kiprun-hero-content"><div class="kiprun-badges"><span class="k-badge blue">SEMAINE ${session.s}</span><span class="k-badge fire">${(session.type||'').toUpperCase()}</span></div><div class="kiprun-bottom"><div><div class="kiprun-name">${session.nom}</div><div class="kiprun-sub">${session.desc||''}</div></div><div class="kiprun-dur">${session.dur}</div></div></div></div>`;
   }else{
-    el.innerHTML=`<div class="sec">Running</div><div class="rest-hero"><div class="rest-hero-img"></div><div class="rest-hero-overlay"></div><div class="rest-hero-content"><div style="font-size:28px">🛋️</div><div><div class="rest-title">REPOS RUNNING</div><div class="rest-sub">Récupération · Renfo léger · Étirements</div></div></div></div>`;
+    html+=`<div class="sec">Aujourd'hui</div><div class="rest-hero"><div class="rest-hero-img"></div><div class="rest-hero-overlay"></div><div class="rest-hero-content"><div style="font-size:28px">🛋️</div><div><div class="rest-title">REPOS</div><div class="rest-sub">Récupération · Renfo léger · Étirements</div></div></div></div>`;
   }
+  if(weekSessions.length>0){
+    const dayNames=['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'];
+    const todayName=dayNames[new Date().getDay()];
+    html+=`<div class="sec">Cette semaine · S${semaine?.s||1}</div>`;
+    html+=`<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px">`;
+    weekSessions.forEach(s=>{
+      const isToday=s.jour===todayName;
+      html+=`<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surface);border-radius:12px;border:1px solid ${isToday?'var(--fire)':'var(--border)'};${isToday?'background:rgba(255,69,0,0.05)':''}">
+        <span style="font-size:9px;font-weight:700;color:${isToday?'var(--fire)':'var(--muted)'};width:32px;text-transform:capitalize;flex-shrink:0">${s.jour.slice(0,3).toUpperCase()}</span>
+        <div style="flex:1"><div style="font-size:13px;font-weight:${isToday?'700':'500'}">${s.nom}</div><div style="font-size:10px;color:var(--muted);margin-top:1px">${s.desc||''}</div></div>
+        <span style="font-family:'Bebas Neue';font-size:16px;color:${isToday?'var(--fire)':'var(--electric)'}">${s.dur}</span>
+        ${isToday?'<span style="font-size:9px;font-weight:700;padding:2px 6px;border-radius:6px;background:var(--fire);color:#fff">TODAY</span>':''}
+      </div>`;
+    });
+    html+=`</div>`;
+  }
+  el.innerHTML=html;
   const habits=getHabits();
   const list=document.getElementById('habitsList');list.innerHTML='';
   let lastTag=null;
