@@ -282,8 +282,15 @@ button,textarea,input,select{font-family:'Inter',sans-serif;}
     <div class="auth-sub">Connecte-toi pour accéder à ton coach</div>
     <div class="auth-error" id="login-error"></div>
     <div class="field"><label>Email</label><input type="email" id="login-email" placeholder="pierre@example.com" autocomplete="email"></div>
-    <div class="field"><label>Mot de passe</label><input type="password" id="login-pwd" placeholder="••••••••" autocomplete="current-password"></div>
-    <button class="btn-primary" onclick="doLogin()">SE CONNECTER</button>
+    <div class="field"><label>Mot de passe</label><div style="position:relative">
+  <input type="password" id="login-pwd" placeholder="••••••••" autocomplete="current-password" style="width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:12px;padding:14px 48px 14px 16px;color:var(--text);font-size:15px;outline:none;">
+  <button type="button" onclick="togglePwd('login-pwd','eye-login')" style="position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:18px;color:var(--muted);" id="eye-login">👁️</button>
+</div></div>
+    <div style="display:flex;align-items:center;gap:8px;margin-top:-4px">
+  <input type="checkbox" id="rememberMe" checked style="width:16px;height:16px;accent-color:var(--fire);cursor:pointer;">
+  <label for="rememberMe" style="font-size:12px;color:var(--muted);cursor:pointer;">Se souvenir de moi</label>
+</div>
+<button class="btn-primary" onclick="doLogin()">SE CONNECTER</button>
     <div class="auth-switch">Pas encore de compte ? <a onclick="showScreen('screen-register')">Créer un compte</a></div>
   </div>
 </div>
@@ -304,7 +311,10 @@ button,textarea,input,select{font-family:'Inter',sans-serif;}
     <div class="auth-error" id="register-error"></div>
     <div class="field"><label>Prénom</label><input type="text" id="reg-prenom" placeholder="Pierre" autocomplete="given-name"></div>
     <div class="field"><label>Email</label><input type="email" id="reg-email" placeholder="pierre@example.com" autocomplete="email"></div>
-    <div class="field"><label>Mot de passe</label><input type="password" id="reg-pwd" placeholder="••••••••" autocomplete="new-password"></div>
+    <div class="field"><label>Mot de passe</label><div style="position:relative">
+  <input type="password" id="reg-pwd" placeholder="••••••••" autocomplete="new-password" style="width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:12px;padding:14px 48px 14px 16px;color:var(--text);font-size:15px;outline:none;">
+  <button type="button" onclick="togglePwd('reg-pwd','eye-reg')" style="position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:18px;color:var(--muted);" id="eye-reg">👁️</button>
+</div></div>
     <button class="btn-primary" onclick="doRegister()">CRÉER MON COMPTE</button>
     <div class="auth-switch">Déjà un compte ? <a onclick="showScreen('screen-login')">Se connecter</a></div>
   </div>
@@ -720,9 +730,8 @@ async function finishOnboarding(){
   document.getElementById('onb-next').style.display='none';
   document.getElementById('onb-back').style.display='none';
   try{
-    // Generate plan with AI
-    const plan=await generatePlan();
-    // Save profile
+    // Save profile immediately with default plan
+    const defaultPlan = getDefaultPlan();
     await sbClient.from('profiles').upsert({
       id:currentUser.id,
       prenom:ONB.prenom||currentUser.user_metadata?.prenom||'Ami',
@@ -731,11 +740,45 @@ async function finishOnboarding(){
       niveau:ONB.niveau,
       jours_run:ONB.jours,
       montre:ONB.montre,
-      plan:plan
+      plan:defaultPlan
     });
     await loadProfile();
     startApp();
+    // Generate AI plan in background
+    generatePlan().then(async plan=>{
+      if(plan&&plan.semaines){
+        await sbClient.from('profiles').update({plan}).eq('id',currentUser.id);
+        await loadProfile();
+        renderToday();
+        renderProgramme();
+      }
+    }).catch(e=>console.log('Plan gen error',e));
   }catch(e){console.error(e);startApp();}
+}
+
+function getDefaultPlan(){
+  const jours=ONB.jours;
+  const obj=ONB.objectif;
+  const niv=ONB.niveau;
+  const weeks=obj==='marathon'?16:obj==='semi'?12:obj==='10km'?8:obj==='5km'?6:12;
+  const seanceTypes={
+    debutant:[{nom:'Footing léger',dur:'20-25min',desc:'Allure très confortable'},{nom:'Footing léger',dur:'25min',desc:'Récupération active'},{nom:'Footing progressif',dur:'30min',desc:'Augmente progressivement'},{nom:'Sortie longue',dur:'35-40min',desc:'Allure endurance'}],
+    intermediaire:[{nom:'Footing endurance',dur:'35min',desc:'Allure confortable'},{nom:'Fractionné court',dur:'40min',desc:'6×200m récup 1min'},{nom:'Footing récup',dur:'30min',desc:'Allure très légère'},{nom:'Sortie longue',dur:'50-60min',desc:'Allure endurance'}],
+    avance:[{nom:'Footing endurance',dur:'45min',desc:'Allure marathon +20%'},{nom:'Fractionné',dur:'50min',desc:'8×400m récup 90s'},{nom:'Tempo',dur:'40min',desc:'20min allure seuil'},{nom:'Sortie longue',dur:'1h15',desc:'Allure marathon +15%'}]
+  };
+  const types=seanceTypes[niv]||seanceTypes.intermediaire;
+  const semaines=[];
+  for(let s=1;s<=weeks;s++){
+    const seances=jours.slice(0,3).map((jour,i)=>({
+      jour,
+      nom:types[Math.min(i,types.length-1)].nom,
+      dur:types[Math.min(i,types.length-1)].dur,
+      desc:types[Math.min(i,types.length-1)].desc
+    }));
+    if(jours.length>=4)seances.push({jour:jours[3],nom:'Sortie longue',dur:types[3].dur,desc:types[3].desc});
+    semaines.push({s,type:s<=3?'Fondation':s<=6?'Construction':s<=10?'Développement':'Affûtage',seances});
+  }
+  return{semaines};
 }
 
 async function generatePlan(){
@@ -1118,6 +1161,14 @@ function startApp(){
   });
   registerSW();
   setTimeout(checkNotifStatus,1000);
+}
+
+// ============ UTILS AUTH ============
+function togglePwd(inputId, btnId){
+  const inp = document.getElementById(inputId);
+  const btn = document.getElementById(btnId);
+  if(inp.type==='password'){inp.type='text';btn.textContent='🙈';}
+  else{inp.type='password';btn.textContent='👁️';}
 }
 
 // ============ INIT ============
