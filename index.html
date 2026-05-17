@@ -303,6 +303,7 @@ button,textarea,input{font-family:'Inter',sans-serif;}
   <button class="nav-btn" onclick="showPanel('history')">📅 Historique</button>
   <button class="nav-btn" onclick="showPanel('notes')">📝 Notes</button>
   <button class="nav-btn" onclick="showPanel('evening')">🌙 Soir</button>
+  <button class="nav-btn" onclick="showPanel('programme')">📋 Programme</button>
   <button class="nav-btn" onclick="showPanel('coach')">🔥 Coach</button>
 </div>
 
@@ -457,6 +458,10 @@ button,textarea,input{font-family:'Inter',sans-serif;}
 </div>
 
 <!-- COACH -->
+<div class="panel" id="panel-programme">
+  <div class="sec">Plan Kiprun · 25 semaines</div>
+  <div id="programmeList"></div>
+</div>
 <div class="panel" id="panel-coach">
   <div class="coach-wrap">
     <div class="sugs">
@@ -1000,6 +1005,7 @@ function showPanel(id){
   if(id==='evening')renderReminders();
   if(id==='history')renderHistory();
   if(id==='notes'){renderNotes();setNoteCategory('general');}
+  if(id==='programme')renderProgramme();
 }
 function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2500);}
 
@@ -1113,6 +1119,56 @@ function startNoteVoice(){
   };
   noteRecog.onerror=()=>{noteRecog=null;btn.textContent='🎤';};
   noteRecog.start();
+}
+
+function renderProgramme(){
+  const el=document.getElementById('programmeList');
+  if(!el)return;
+  const today=new Date();today.setHours(0,0,0,0);
+  const s6Start=new Date('2026-05-11');
+  
+  el.innerHTML=KIPRUN.map(w=>{
+    const weekStart=new Date(s6Start);weekStart.setDate(s6Start.getDate()+(w.s-6)*7);
+    const weekEnd=new Date(weekStart);weekEnd.setDate(weekStart.getDate()+6);
+    const isCurrent=today>=weekStart&&today<=weekEnd;
+    const isPast=today>weekEnd;
+    const dateStr=weekStart.toLocaleDateString('fr-FR',{day:'numeric',month:'short'})+' – '+weekEnd.toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
+    const typeColor=w.type==='Intense'?'var(--fire)':w.type==='Repos'?'var(--purple)':'var(--muted)';
+    const sessions=[
+      w.ma?{jour:'MAR',nom:w.ma,dur:w.mad}:null,
+      {jour:'MER',nom:w.me,dur:w.med},
+      {jour:'VEN',nom:w.v,dur:w.vd},
+      {jour:'DIM',nom:w.di,dur:w.did}
+    ].filter(Boolean);
+    
+    return`<div style="background:var(--surface);border-radius:16px;margin-bottom:8px;border:1px solid ${isCurrent?'var(--fire)':isPast?'var(--border)':'var(--border)'};overflow:hidden;${isPast?'opacity:0.5':''}">
+      <div style="padding:12px 14px;display:flex;align-items:center;gap:10px;${isCurrent?'background:rgba(255,69,0,0.05)':''}">
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:2px">
+            <span style="font-family:'Bebas Neue';font-size:18px;letter-spacing:1px">S${w.s}</span>
+            <span style="font-size:9px;font-weight:700;padding:2px 8px;border-radius:10px;background:${typeColor}20;color:${typeColor};border:1px solid ${typeColor}40">${w.type}</span>
+            ${isCurrent?'<span style="font-size:9px;font-weight:700;padding:2px 8px;border-radius:10px;background:var(--fire);color:#fff">EN COURS</span>':''}
+            ${isPast?'<span style="font-size:9px;color:var(--muted)">✓</span>':''}
+          </div>
+          <div style="font-size:10px;color:var(--muted)">${dateStr}</div>
+        </div>
+      </div>
+      <div style="padding:0 14px 12px;display:flex;flex-direction:column;gap:6px">
+        ${sessions.map(s=>`
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:9px;font-weight:700;color:var(--muted);width:28px;flex-shrink:0">${s.jour}</span>
+            <span style="font-size:12px;flex:1">${s.nom}</span>
+            <span style="font-family:'Bebas Neue';font-size:14px;color:var(--electric)">${s.dur}</span>
+          </div>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+  
+  // Scroll to current week
+  setTimeout(()=>{
+    const current=el.querySelector('[style*="EN COURS"]');
+    if(current)current.closest('[style*="border-radius:16px"]').scrollIntoView({behavior:'smooth',block:'center'});
+  },300);
 }
 
 async function registerSW(){
