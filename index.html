@@ -1211,6 +1211,14 @@ function openSeanceDetail(s){
 
 // ============ INIT ============
 async function init(){
+  // Clear old service worker caches
+  if('caches' in window){
+    caches.keys().then(keys=>keys.forEach(k=>caches.delete(k)));
+  }
+  if('serviceWorker' in navigator){
+    const regs = await navigator.serviceWorker.getRegistrations();
+    for(const reg of regs) await reg.unregister();
+  }
   await initSupabase();
   if(!SUPABASE_READY){showScreen('screen-login');return;}
   // Check existing session
