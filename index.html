@@ -951,10 +951,12 @@ function renderToday(){
     const dayNames=['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'];
     const todayName=dayNames[new Date().getDay()];
     html+=`<div class="sec">Cette semaine · S${semaine?.s||1}</div>`;
+    window._weekSessions = weekSessions;
     html+=`<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px">`;
     weekSessions.forEach(s=>{
       const isToday=s.jour===todayName;
-      html+=`<div onclick="openSeanceDetail(${JSON.stringify(s).replace(/`/g,'').replace(/'/g,'&#39;')})" style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surface);border-radius:12px;border:1px solid ${isToday?'var(--fire)':'var(--border)'};${isToday?'background:rgba(255,69,0,0.05)':''}cursor:pointer;">
+      const si=weekSessions.indexOf(s);
+      html+=`<div onclick="openSeanceDetail(window._weekSessions[${si}])" style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surface);border-radius:12px;border:1px solid ${isToday?'var(--fire)':'var(--border)'};${isToday?'background:rgba(255,69,0,0.05)':''}cursor:pointer;">
         <span style="font-size:9px;font-weight:700;color:${isToday?'var(--fire)':'var(--muted)'};width:32px;text-transform:capitalize;flex-shrink:0">${s.jour.slice(0,3).toUpperCase()}</span>
         <div style="flex:1"><div style="font-size:13px;font-weight:${isToday?'700':'500'}">${s.nom}</div><div style="font-size:10px;color:var(--muted);margin-top:1px">${s.desc||''}</div></div>
         <span style="font-family:'Bebas Neue';font-size:16px;color:${isToday?'var(--fire)':'var(--electric)'}">${s.dur}</span>
