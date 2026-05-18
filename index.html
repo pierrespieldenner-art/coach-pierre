@@ -1171,6 +1171,7 @@ function togglePwd(inputId, btnId){
   else{inp.type='password';btn.textContent='👁️';}
 }
 
+window.closeDynModal=function(){var m=document.getElementById("dynModal");if(m)m.remove();};
 function openSeanceDetail(s){
   if(!s)return;
   const nom=s.nom||'';
@@ -1198,7 +1199,7 @@ function openSeanceDetail(s){
     +'<div><div style="font-family:BebasNeue;font-size:32px;color:#00d4ff">'+dur+'</div><div style="font-size:9px;color:#555;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-top:2px">Durée</div></div>'
     +'<div><div style="font-family:BebasNeue;font-size:32px;color:#ff4500">S'+weekS+'</div><div style="font-size:9px;color:#555;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-top:2px">Semaine</div></div>'
     +'</div></div>'
-    +'<button onclick="document.getElementById('dynModal').remove()" style="width:100%;padding:14px;background:linear-gradient(135deg,#ff4500,#ff8c00);color:#fff;border:none;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;margin-top:4px">FERMER</button>'
+    +'<button onclick="window.closeDynModal()" style="width:100%;padding:14px;background:linear-gradient(135deg,#ff4500,#ff8c00);color:#fff;border:none;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;margin-top:4px">FERMER</button>'
     +'</div>';
   document.body.appendChild(overlay);
 }
