@@ -1092,7 +1092,7 @@ function renderProgramme(){
         <div style="font-size:10px;color:var(--muted)">${dateStr}</div>
       </div>
       <div style="padding:0 14px 12px;display:flex;flex-direction:column;gap:5px">
-        ${(w.seances||[]).map(s=>{const id=storeSession({...s,s:w.s,type:w.type});return`<div data-sid="${id}" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:5px 0;border-bottom:1px solid var(--border)"><span style="font-size:9px;font-weight:700;color:var(--muted);width:28px;flex-shrink:0">${(s.jour||'').slice(0,3).toUpperCase()}</span><span style="font-size:12px;flex:1">${s.nom}</span><span style="font-family:'Bebas Neue';font-size:14px;color:var(--electric)">${s.dur}</span><span style="color:var(--muted)">›</span></div>`;}).join('')}
+        ${(w.seances||[]).map((s,si)=>{window['_s_'+wi+'_'+si]={...s,s:w.s,type:w.type};return`<div onclick="openSeanceDetail(window['_s_${wi}_${si}'])" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:5px 0;border-bottom:1px solid var(--border)"><span style="font-size:9px;font-weight:700;color:var(--muted);width:28px;flex-shrink:0">${(s.jour||'').slice(0,3).toUpperCase()}</span><span style="font-size:12px;flex:1">${s.nom}</span><span style="font-family:'Bebas Neue';font-size:14px;color:var(--electric)">${s.dur}</span><span style="color:var(--muted)">›</span></div>`;}).join('')}
       </div>
     </div>`;
   }).join('');}
