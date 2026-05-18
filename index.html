@@ -790,10 +790,22 @@ async function generatePlan(){
   
   try{
     const res=await fetch('/api/coach',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
-      systemPrompt:`Tu es un coach running expert. Génère un plan d'entraînement en JSON uniquement, sans markdown.`,
-      messages:[{role:'user',content:`Génère un plan running pour: objectif=${obj}, date=${date||'pas de date'}, niveau=${niv}, jours disponibles=${jours}, semaines restantes=${weeksLeft}.
-Retourne UNIQUEMENT un JSON valide avec ce format:
-{"semaines":[{"s":1,"type":"Fondation","seances":[{"jour":"mardi","nom":"Footing léger","dur":"30min","desc":"Allure confortable, tu peux parler"},{"jour":"vendredi","nom":"Footing léger","dur":"25min","desc":"Récupération active"}]},...]}`}]
+      systemPrompt:`Tu es un coach running expert. Reponds UNIQUEMENT en JSON valide, sans markdown, sans explication.`,
+      messages:[{role:'user',content:`Génère un plan running pour: objectif=${obj}, date=${date||'pas de date'}, niveau=${niv}, jours=${jours}, semaines=${weeksLeft}.
+Format JSON EXACT (respecte scrupuleusement cette structure):
+{"semaines":[{"s":1,"type":"Fondation","seances":[{
+  "jour":"mardi",
+  "nom":"5x500m (R=200m)",
+  "dur":"52min",
+  "desc":"Optimisation VMA - régulier sur chaque répétition",
+  "total_dist":"8.5km",
+  "echauffement":{"dur":"20min","desc":"Footing léger","allure_debut":"6'59/km","allure_fin":"6'27/km"},
+  "exercices":[{"repetitions":5,"distance":"500m","allure_cible":"4'24/km","allure_max":"4'11/km","recup_dist":"200m","recup_allure":"6'59/km"}],
+  "retour_calme":{"dur":"10min","allure":"6'59/km"},
+  "hydratation":{"pendant":"400ml eau ou isotonique","apres":"750ml eau gazeuse ou eau + electrolytes"},
+  "recuperation":["Massage 1min par muscle","Chaussettes de compression 1h30","Jambes surélevées 15min"],
+  "conseil":"Pars 15s plus lentement que prévu au premier intervalle. Lâche-toi sur le dernier."
+}]}]}`}]
     })});
     const data=await res.json();
     const text=data.text||'';
