@@ -955,8 +955,8 @@ function renderToday(){
     html+=`<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px">`;
     weekSessions.forEach(s=>{
       const isToday=s.jour===todayName;
-      const si=weekSessions.indexOf(s);
-      html+=`<div onclick="openSeanceDetail(window._weekSessions[${si}])" style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surface);border-radius:12px;border:1px solid ${isToday?'var(--fire)':'var(--border)'};${isToday?'background:rgba(255,69,0,0.05)':''}cursor:pointer;">
+      const sid=storeSession(s);
+      html+=`<div data-sid="${sid}" style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surface);border-radius:12px;border:1px solid ${isToday?'var(--fire)':'var(--border)'};${isToday?'background:rgba(255,69,0,0.05)':''}cursor:pointer;">
         <span style="font-size:9px;font-weight:700;color:${isToday?'var(--fire)':'var(--muted)'};width:32px;text-transform:capitalize;flex-shrink:0">${s.jour.slice(0,3).toUpperCase()}</span>
         <div style="flex:1"><div style="font-size:13px;font-weight:${isToday?'700':'500'}">${s.nom}</div><div style="font-size:10px;color:var(--muted);margin-top:1px">${s.desc||''}</div></div>
         <span style="font-family:'Bebas Neue';font-size:16px;color:${isToday?'var(--fire)':'var(--electric)'}">${s.dur}</span>
@@ -1207,6 +1207,15 @@ function togglePwd(inputId, btnId){
   else{inp.type='password';btn.textContent='👁️';}
 }
 
+// ============ SEANCE STORE ============
+window._sessions = {};
+window._sessionCount = 0;
+function storeSession(s){
+  const id = 'sess_' + (window._sessionCount++);
+  window._sessions[id] = s;
+  return id;
+}
+
 // ============ SEANCE DETAIL ============
 function openSeanceDetail(s){
   const typeColor=s.type==='Développement'?'var(--electric)':s.type==='Affûtage'||s.type==='Affûtage final'||s.type==='Race Week'?'var(--neon)':s.type==='Repos'?'var(--purple)':'var(--fire)';
@@ -1271,6 +1280,14 @@ async function init(){
   }
 }
 init();
+document.addEventListener('click', function(e){
+  const el = e.target.closest('[data-sid]');
+  if(el){
+    const sid = el.getAttribute('data-sid');
+    const s = window._sessions[sid];
+    if(s) openSeanceDetail(s);
+  }
+});
 </script>
 </body>
 </html>
