@@ -780,25 +780,63 @@ async function finishOnboarding(){
 
 function getDefaultPlan(){
   const jours=ONB.jours;
-  const obj=ONB.objectif;
   const niv=ONB.niveau;
+  const sport=ONB.sport||'running';
+  const obj=ONB.objectif;
   const weeks=obj==='marathon'?16:obj==='semi'?12:obj==='10km'?8:obj==='5km'?6:12;
-  const seanceTypes={
-    debutant:[{nom:'Footing léger',dur:'20-25min',desc:'Allure très confortable'},{nom:'Footing léger',dur:'25min',desc:'Récupération active'},{nom:'Footing progressif',dur:'30min',desc:'Augmente progressivement'},{nom:'Sortie longue',dur:'35-40min',desc:'Allure endurance'}],
-    intermediaire:[{nom:'Footing endurance',dur:'35min',desc:'Allure confortable'},{nom:'Fractionné court',dur:'40min',desc:'6×200m récup 1min'},{nom:'Footing récup',dur:'30min',desc:'Allure très légère'},{nom:'Sortie longue',dur:'50-60min',desc:'Allure endurance'}],
-    avance:[{nom:'Footing endurance',dur:'45min',desc:'Allure marathon +20%'},{nom:'Fractionné',dur:'50min',desc:'8×400m récup 90s'},{nom:'Tempo',dur:'40min',desc:'20min allure seuil'},{nom:'Sortie longue',dur:'1h15',desc:'Allure marathon +15%'}]
+  const plans={
+    running:{
+      debutant:[{nom:'Footing leger',dur:'25min',desc:'Allure tres confortable'},{nom:'Footing leger',dur:'20min',desc:'Recuperation'},{nom:'Footing progressif',dur:'30min',desc:'Augmente progressivement'},{nom:'Sortie longue',dur:'35min',desc:'Endurance'}],
+      intermediaire:[{nom:'Footing endurance',dur:'35min',desc:'Zone 2'},{nom:'Fractionne court',dur:'40min',desc:'6x200m recup 1min'},{nom:'Footing recup',dur:'30min',desc:'Tres leger'},{nom:'Sortie longue',dur:'55min',desc:'Endurance'}],
+      avance:[{nom:'Footing endurance',dur:'45min',desc:'Marathon +20%'},{nom:'Fractionne',dur:'50min',desc:'8x400m recup 90s'},{nom:'Tempo',dur:'40min',desc:'20min allure seuil'},{nom:'Sortie longue',dur:'1h15',desc:'Marathon +15%'}]
+    },
+    crossfit:{
+      debutant:[{nom:'WOD debutant',dur:'45min',desc:'Mouvements de base'},{nom:'Gymnastic skills',dur:'40min',desc:'Pull-ups, dips'},{nom:'Cardio conditioning',dur:'35min',desc:'Row, bike, run'},{nom:'WOD mobility',dur:'50min',desc:'WOD + 15min mobilite'}],
+      intermediaire:[{nom:'WOD intense',dur:'60min',desc:'RX ou scaled'},{nom:'Strength focus',dur:'55min',desc:'Squat, deadlift, press'},{nom:'Metcon',dur:'45min',desc:'AMRAP ou EMOM 20min'},{nom:'WOD competition',dur:'60min',desc:'Effort max'}],
+      avance:[{nom:'WOD RX',dur:'60min',desc:'Mouvements avances'},{nom:'Olympic lifting',dur:'60min',desc:'Snatch, clean and jerk'},{nom:'Metcon avance',dur:'50min',desc:'Long metcon'},{nom:'WOD test',dur:'60min',desc:'Benchmark WOD'}]
+    },
+    surf:{
+      debutant:[{nom:'Cardio surf',dur:'30min',desc:'Paddle simulation, gainage'},{nom:'Technique',dur:'45min',desc:'Pop-up, stance'},{nom:'Fitness surf',dur:'40min',desc:'Epaules, dos, core'},{nom:'Session surf',dur:'90min',desc:'Mise en pratique'}],
+      intermediaire:[{nom:'Paddle training',dur:'40min',desc:'Endurance paddle'},{nom:'Force specifique',dur:'45min',desc:'Rotation, explosivite'},{nom:'Yoga surf',dur:'40min',desc:'Mobilite hanches'},{nom:'Session surf',dur:'120min',desc:'Travail manoeuvres'}],
+      avance:[{nom:'Conditionnement',dur:'50min',desc:'Circuit specifique surf'},{nom:'Explosivite',dur:'45min',desc:'Plyometrie'},{nom:'Mobility avancee',dur:'40min',desc:'Flexibilite complete'},{nom:'Session surf',dur:'120min',desc:'Performance'}]
+    },
+    muscu:{
+      debutant:[{nom:'Full body A',dur:'45min',desc:'Squat, bench, row 3x8'},{nom:'Cardio leger',dur:'20min',desc:'Velo ou marche'},{nom:'Full body B',dur:'45min',desc:'Deadlift, OHP, pull-up 3x8'},{nom:'Full body C',dur:'45min',desc:'Variation + core'}],
+      intermediaire:[{nom:'Push day',dur:'60min',desc:'Chest, epaules, triceps'},{nom:'Pull day',dur:'60min',desc:'Dos, biceps'},{nom:'Leg day',dur:'60min',desc:'Squat, leg press, fentes'},{nom:'Upper body',dur:'55min',desc:'Force + hypertrophie'}],
+      avance:[{nom:'Push heavy',dur:'70min',desc:'Bench, OHP lourd'},{nom:'Pull heavy',dur:'70min',desc:'Deadlift, rowing lourd'},{nom:'Leg heavy',dur:'70min',desc:'Squat lourd'},{nom:'Cardio core',dur:'40min',desc:'Conditioning + gainage'}]
+    },
+    velo:{
+      debutant:[{nom:'Sortie endurance',dur:'45min',desc:'Allure confortable Z2'},{nom:'Intervalle court',dur:'40min',desc:'5x2min effort Z4'},{nom:'Recuperation',dur:'30min',desc:'Tres leger Z1'},{nom:'Sortie longue',dur:'1h30',desc:'Endurance fondamentale'}],
+      intermediaire:[{nom:'Endurance',dur:'1h',desc:'Z2 strict'},{nom:'Intervalle',dur:'50min',desc:'4x5min Z4-Z5'},{nom:'Tempo',dur:'45min',desc:'20min Z3-Z4'},{nom:'Sortie longue',dur:'2h',desc:'Z2 avec finish Z3'}],
+      avance:[{nom:'Endurance',dur:'1h15',desc:'Z2 base aerobique'},{nom:'VO2max',dur:'55min',desc:'6x3min Z5'},{nom:'Tempo long',dur:'1h',desc:'40min Z4'},{nom:'Sortie longue',dur:'3h',desc:'Z2 avec blocs Z3'}]
+    },
+    natation:{
+      debutant:[{nom:'Technique',dur:'40min',desc:'Crawl, respiration'},{nom:'Endurance',dur:'35min',desc:'1500m modere'},{nom:'Technique dos',dur:'35min',desc:'Nage dos + brasse'},{nom:'Endurance longue',dur:'45min',desc:'2000m confortable'}],
+      intermediaire:[{nom:'Intervalle',dur:'50min',desc:'10x100m recup 20s'},{nom:'Technique',dur:'45min',desc:'Drills crawl'},{nom:'Endurance',dur:'45min',desc:'2500m soutenu'},{nom:'Long',dur:'55min',desc:'3000m endurance'}],
+      avance:[{nom:'Sprint',dur:'55min',desc:'20x50m recup 15s'},{nom:'Technique avancee',dur:'50min',desc:'Virage culbute'},{nom:'Seuil',dur:'50min',desc:'5x400m recup 30s'},{nom:'Volume',dur:'60min',desc:'4000m endurance'}]
+    },
+    boxe:{
+      debutant:[{nom:'Technique',dur:'45min',desc:'Jab, cross, crochet'},{nom:'Cardio boxe',dur:'40min',desc:'Corde, shadow boxing'},{nom:'Sac de frappe',dur:'45min',desc:'Combinaisons de base'},{nom:'Sparring leger',dur:'50min',desc:'Technique + defense'}],
+      intermediaire:[{nom:'Technique avancee',dur:'55min',desc:'Combinaisons 4-6 coups'},{nom:'Conditionnement',dur:'50min',desc:'Circuit 6 rounds'},{nom:'Sac lourd',dur:'50min',desc:'Puissance + vitesse'},{nom:'Sparring',dur:'60min',desc:'3-5 rounds'}],
+      avance:[{nom:'Preparation combat',dur:'60min',desc:'Strategie + combinaisons'},{nom:'Conditioning intense',dur:'55min',desc:'10 rounds circuit'},{nom:'Mitaines',dur:'55min',desc:'Combinaisons rapides'},{nom:'Full sparring',dur:'60min',desc:'5-8 rounds'}]
+    },
+    forme:{
+      debutant:[{nom:'Full body leger',dur:'30min',desc:'Poids du corps'},{nom:'Cardio doux',dur:'25min',desc:'Marche rapide ou velo'},{nom:'Stretching',dur:'20min',desc:'Mobilite complete'},{nom:'Activite plaisir',dur:'45min',desc:'Sport au choix'}],
+      intermediaire:[{nom:'HIIT',dur:'35min',desc:'Circuit 6 exercices'},{nom:'Cardio moderee',dur:'35min',desc:'Course ou velo'},{nom:'Renfo',dur:'40min',desc:'Poids libres'},{nom:'Activite longue',dur:'60min',desc:'Randonnee ou natation'}],
+      avance:[{nom:'HIIT intense',dur:'45min',desc:'Tabata ou circuit avance'},{nom:'Cardio longue',dur:'50min',desc:'Endurance 45min+'},{nom:'Force',dur:'50min',desc:'Programme force'},{nom:'Sport specifique',dur:'60min',desc:'Objectif performance'}]
+    }
   };
-  const types=seanceTypes[niv]||seanceTypes.intermediaire;
+  const sportPlans=plans[sport]||plans.running;
+  const types=sportPlans[niv]||sportPlans.intermediaire;
   const semaines=[];
+  const phases=['Fondation','Fondation','Construction','Construction','Developpement','Developpement','Affutage','Affutage'];
   for(let s=1;s<=weeks;s++){
-    const seances=jours.slice(0,3).map((jour,i)=>({
-      jour,
-      nom:types[Math.min(i,types.length-1)].nom,
+    const seances=jours.slice(0,Math.min(4,jours.length)).map((jour,i)=>({
+      jour,nom:types[Math.min(i,types.length-1)].nom,
       dur:types[Math.min(i,types.length-1)].dur,
       desc:types[Math.min(i,types.length-1)].desc
     }));
-    if(jours.length>=4)seances.push({jour:jours[3],nom:'Sortie longue',dur:types[3].dur,desc:types[3].desc});
-    semaines.push({s,type:s<=3?'Fondation':s<=6?'Construction':s<=10?'Développement':'Affûtage',seances});
+    semaines.push({s,type:phases[Math.min(s-1,phases.length-1)],seances});
   }
   return{semaines};
 }
