@@ -809,11 +809,14 @@ async function generatePlan(){
   const niv=ONB.niveau;
   const jours=ONB.jours.join(', ');
   const weeksLeft=date?Math.floor((new Date(date)-new Date())/86400000/7):16;
+  const sport=ONB.sport||'running';
   
   try{
-    const res=await fetch('/api/coach',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+    const controller=new AbortController();
+    const timeout=setTimeout(()=>controller.abort(),8000);
+    const res=await fetch('/api/coach',{method:'POST',signal:controller.signal,headers:{'Content-Type':'application/json'},body:JSON.stringify({
       systemPrompt:`Tu es un coach sportif expert. Reponds UNIQUEMENT en JSON valide, sans markdown, sans explication.`,
-      messages:[{role:'user',content:`Génère un plan pour: sport=${ONB.sport||'running'}, objectif=${obj}, date=${date||'pas de date'}, niveau=${niv}, jours=${jours}, semaines=${weeksLeft}.
+      messages:[{role:'user',content:`Génère un plan pour: sport=${sport}, objectif=${obj}, date=${date||'pas de date'}, niveau=${niv}, jours=${jours}, semaines=${weeksLeft}.
 Format JSON EXACT (respecte scrupuleusement cette structure):
 {"semaines":[{"s":1,"type":"Fondation","seances":[{
   "jour":"mardi",
@@ -833,8 +836,10 @@ Format JSON EXACT (respecte scrupuleusement cette structure):
     const text=data.text||'';
     const clean=text.replace(/```json|```/g,'').trim();
     return JSON.parse(clean);
+    clearTimeout(timeout);
   }catch(e){
-    return {semaines:[{s:1,type:'Fondation',seances:[{jour:ONB.jours[0]||'mardi',nom:'Footing léger',dur:'30min',desc:'Démarrage progressif'}]}]};
+    console.log('Plan gen failed, using default');
+    return getDefaultPlan();
   }
 }
 
