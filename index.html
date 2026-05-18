@@ -614,6 +614,12 @@ button,textarea,input,select{font-family:'Inter',sans-serif;}
   </div>
 </div>
 <div class="toast" id="toast"></div>
+<div class="modal" id="seanceModal">
+  <div class="sheet">
+    <div class="sh-handle"></div>
+    <div id="seanceModalContent"></div>
+  </div>
+</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <script>
@@ -948,11 +954,11 @@ function renderToday(){
     html+=`<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px">`;
     weekSessions.forEach(s=>{
       const isToday=s.jour===todayName;
-      html+=`<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surface);border-radius:12px;border:1px solid ${isToday?'var(--fire)':'var(--border)'};${isToday?'background:rgba(255,69,0,0.05)':''}">
+      html+=`<div onclick="openSeanceDetail(${JSON.stringify(s).replace(/`/g,'').replace(/'/g,'&#39;')})" style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surface);border-radius:12px;border:1px solid ${isToday?'var(--fire)':'var(--border)'};${isToday?'background:rgba(255,69,0,0.05)':''}cursor:pointer;">
         <span style="font-size:9px;font-weight:700;color:${isToday?'var(--fire)':'var(--muted)'};width:32px;text-transform:capitalize;flex-shrink:0">${s.jour.slice(0,3).toUpperCase()}</span>
         <div style="flex:1"><div style="font-size:13px;font-weight:${isToday?'700':'500'}">${s.nom}</div><div style="font-size:10px;color:var(--muted);margin-top:1px">${s.desc||''}</div></div>
         <span style="font-family:'Bebas Neue';font-size:16px;color:${isToday?'var(--fire)':'var(--electric)'}">${s.dur}</span>
-        ${isToday?'<span style="font-size:9px;font-weight:700;padding:2px 6px;border-radius:6px;background:var(--fire);color:#fff">TODAY</span>':''}
+        ${isToday?'<span style="font-size:9px;font-weight:700;padding:2px 6px;border-radius:6px;background:var(--fire);color:#fff">TODAY</span>':'<span style="font-size:14px;color:var(--muted)">›</span>'}
       </div>`;
     });
     html+=`</div>`;
@@ -1197,6 +1203,54 @@ function togglePwd(inputId, btnId){
   const btn = document.getElementById(btnId);
   if(inp.type==='password'){inp.type='text';btn.textContent='🙈';}
   else{inp.type='password';btn.textContent='👁️';}
+}
+
+// ============ SEANCE DETAIL ============
+function openSeanceDetail(s){
+  const typeColor=s.type==='Développement'?'var(--electric)':s.type==='Affûtage'||s.type==='Affûtage final'||s.type==='Race Week'?'var(--neon)':s.type==='Repos'?'var(--purple)':'var(--fire)';
+  const tips={
+    'Footing léger':'Allure où tu peux tenir une conversation complète. FC cible : zone 2 (60-70% FC max). Respiration nasale si possible.',
+    'Footing endurance':'Allure confortable et régulière. FC cible : zone 2-3. Tu dois pouvoir parler par courtes phrases.',
+    'Footing récup':'Très lent, presque marche rapide. L'objectif est la récupération active, pas la performance.',
+    'Fractionné court':'Intervalles courts à allure rapide (85-90% FC max). La récupération est aussi importante que l'effort.',
+    'Fractionné':'Intervalles à allure 10km. Récupération trottinement. Ne pas partir trop vite sur le premier.',
+    'Fractionné long':'Intervalles longs à allure semi-marathon. Gestion de l'effort sur la durée.',
+    'Tempo':'Allure seuil lactique — inconfortable mais tenable. Tu peux dire quelques mots mais pas tenir une conversation.',
+    'Tempo long':'Comme tempo mais plus long. Gestion mentale importante sur la fin.',
+    'Tempo marathon':'Allure cible marathon. C'est l'allure que tu devras tenir le jour J — apprends à la reconnaître.',
+    'Côtes':'Effort maximal sur la montée, récupération complète à la descente. Renforce les jambes et le cardio.',
+    'Strides':'Accélérations progressives sur 80-100m. Pas de sprint, juste un rythme vif et relâché.',
+    'Sortie longue':'L'entraînement le plus important. Allure endurance stricte, même si tu te sens bien. Ravitaillement dès 45min.',
+    'Repos actif':'Marche, vélo léger ou natation. Garder le corps en mouvement sans stress.',
+    'Repos total':'Récupération complète. Étirements légers OK. Hydratation ++.',
+    'MARATHON 🏁':'Le grand jour. Pars 15 secondes plus lentement que prévu au km. Confiance en ton entraînement.'
+  };
+  const tip=Object.keys(tips).find(k=>s.nom.includes(k.split(' ')[0]))||null;
+  const conseil=tip?tips[tip]:'Écoute ton corps et respecte l'allure prévue.';
+  
+  document.getElementById('seanceModalContent').innerHTML=`
+    <div style="margin-bottom:16px">
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <span style="font-size:9px;font-weight:700;padding:3px 10px;border-radius:10px;background:${typeColor}20;color:${typeColor};border:1px solid ${typeColor}40;text-transform:uppercase">${s.type||''}</span>
+        <span style="font-size:9px;font-weight:700;padding:3px 10px;border-radius:10px;background:var(--surface2);color:var(--muted);text-transform:capitalize">${s.jour||''}</span>
+      </div>
+      <div style="font-family:'Bebas Neue';font-size:36px;letter-spacing:2px;margin-bottom:4px">${s.nom}</div>
+      <div style="font-size:13px;color:var(--muted)">${s.desc||''}</div>
+    </div>
+    <div style="background:var(--surface);border-radius:16px;padding:16px;margin-bottom:12px;border:1px solid var(--border)">
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;text-align:center">
+        <div><div style="font-family:'Bebas Neue';font-size:28px;color:var(--electric)">${s.dur}</div><div style="font-size:9px;color:var(--muted);font-weight:700;letter-spacing:1px;text-transform:uppercase">Durée</div></div>
+        <div><div style="font-family:'Bebas Neue';font-size:28px;color:var(--fire)">S${s.s||'—'}</div><div style="font-size:9px;color:var(--muted);font-weight:700;letter-spacing:1px;text-transform:uppercase">Semaine</div></div>
+        <div><div style="font-family:'Bebas Neue';font-size:28px;color:var(--neon)">${s.nom.includes('long')||s.nom.includes('Long')?'Z2':'Z2-3'}</div><div style="font-size:9px;color:var(--muted);font-weight:700;letter-spacing:1px;text-transform:uppercase">Zone FC</div></div>
+      </div>
+    </div>
+    <div style="background:var(--surface);border-radius:16px;padding:16px;margin-bottom:12px;border:1px solid var(--border)">
+      <div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">💡 Conseil coach</div>
+      <div style="font-size:13px;line-height:1.6;color:var(--text)">${conseil}</div>
+    </div>
+    <button onclick="document.getElementById('seanceModal').classList.remove('open')" style="width:100%;padding:14px;background:linear-gradient(135deg,var(--fire),var(--fire2));color:#fff;border:none;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;margin-top:4px">FERMER</button>
+  `;
+  document.getElementById('seanceModal').classList.add('open');
 }
 
 // ============ INIT ============
