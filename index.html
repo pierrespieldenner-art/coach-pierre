@@ -1216,6 +1216,15 @@ function storeSession(s){
   return id;
 }
 
+// ============ SEANCE STORE ============
+window._sessions = {};
+window._sessionCount = 0;
+function storeSession(s){
+  const id = 'sess_' + (window._sessionCount++);
+  window._sessions[id] = s;
+  return id;
+}
+
 // ============ SEANCE DETAIL ============
 function openSeanceDetail(s){
   const typeColor=s.type==='Développement'?'var(--electric)':s.type==='Affûtage'||s.type==='Affûtage final'||s.type==='Race Week'?'var(--neon)':s.type==='Repos'?'var(--purple)':'var(--fire)';
@@ -1280,6 +1289,14 @@ async function init(){
   }
 }
 init();
+document.addEventListener('click', function(e){
+  const el = e.target.closest('[data-sid]');
+  if(el){
+    const sid = el.getAttribute('data-sid');
+    const s = window._sessions[sid];
+    if(s) openSeanceDetail(s);
+  }
+});
 document.addEventListener('click', function(e){
   const el = e.target.closest('[data-sid]');
   if(el){
