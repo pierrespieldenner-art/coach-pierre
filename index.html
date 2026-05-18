@@ -1185,7 +1185,17 @@ function openSeanceDetail(s){
   const type = s.type || '';
   const jour = s.jour || '';
   const weekS = s.weekS || s.s || '';
-  document.getElementById('seanceModalContent').innerHTML=`
+  // Create modal dynamically
+  let overlay = document.getElementById('dynSeanceModal');
+  if(!overlay){
+    overlay = document.createElement('div');
+    overlay.id = 'dynSeanceModal';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:999;display:flex;align-items:flex-end;backdrop-filter:blur(8px)';
+    document.body.appendChild(overlay);
+  }
+  overlay.style.display = 'flex';
+  overlay.innerHTML=`<div style="background:#0a0a0a;border-radius:28px 28px 0 0;padding:20px 20px 50px;width:100%;max-height:90vh;overflow-y:auto;border-top:1px solid #222">
+    <div style="width:36px;height:4px;background:#222;border-radius:2px;margin:0 auto 20px"></div>
     <div style="margin-bottom:16px">
       <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
         <span style="font-size:9px;font-weight:700;padding:3px 10px;border-radius:10px;background:rgba(255,69,0,0.2);color:var(--fire);border:1px solid rgba(255,69,0,0.3);text-transform:uppercase">${type}</span>
@@ -1204,9 +1214,8 @@ function openSeanceDetail(s){
       <div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">💡 Conseil</div>
       <div style="font-size:13px;line-height:1.6">${desc||'Écoute ton corps et respecte l allure prévue.'}</div>
     </div>
-    <button onclick="document.getElementById('seanceModal').classList.remove('open')" style="width:100%;padding:14px;background:linear-gradient(135deg,var(--fire),var(--fire2));color:#fff;border:none;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer">FERMER</button>
-  `;
-  document.getElementById('seanceModal').classList.add('open');
+    <button onclick="document.getElementById('dynSeanceModal').style.display='none'" style="width:100%;padding:14px;background:linear-gradient(135deg,var(--fire),var(--fire2));color:#fff;border:none;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer">FERMER</button>
+  </div>`;
 }
 
 // ============ INIT ============
