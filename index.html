@@ -1224,6 +1224,17 @@ function openSeanceDetail(s){
   html+='<div style="background:#111;border-radius:12px;padding:12px;text-align:center;border:1px solid #222"><div style="font-size:20px;font-weight:800;color:#39ff14">'+(dist||'—')+'</div><div style="font-size:9px;color:#555;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-top:2px">Distance</div></div>';
   html+='</div>';
 
+  // Allure principale (pour les footings sans exercices)
+  if(exos.length===0 && ech){
+    const allurePrincipale = ech.allure_fin || '';
+    html+='<div style="background:#111;border-radius:14px;padding:14px;margin-bottom:10px;border:1px solid #222">';
+    html+='<div style="font-size:10px;font-weight:700;color:#00d4ff;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">🏃 Allure cible</div>';
+    html+='<div style="display:flex;align-items:center;gap:12px">';
+    html+='<div style="background:#00d4ff20;border-radius:8px;padding:10px 16px;font-size:22px;font-weight:800;color:#00d4ff">'+allurePrincipale+'</div>';
+    html+='<div style="font-size:12px;color:#aaa">Allure confortable<br><span style="color:#555;font-size:11px">Tu dois pouvoir parler</span></div>';
+    html+='</div></div>';
+  }
+
   // Echauffement
   if(ech){
     html+='<div style="background:#111;border-radius:14px;padding:14px;margin-bottom:10px;border:1px solid #222">';
