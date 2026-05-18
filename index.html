@@ -334,12 +334,18 @@ button,textarea,input,select{font-family:'Inter',sans-serif;}
       <div class="onb-title">TON OBJECTIF 🎯</div>
       <div class="onb-sub">Qu'est-ce que tu prépares ? Le coach adapte tout en fonction de ta réponse.</div>
       <div class="obj-grid">
-        <div class="obj-card sel" data-obj="marathon" onclick="selObj(this)"><div class="icon">🏁</div><div class="label">Marathon</div><div class="sub">42km</div></div>
-        <div class="obj-card" data-obj="semi" onclick="selObj(this)"><div class="icon">🏃</div><div class="label">Semi</div><div class="sub">21km</div></div>
-        <div class="obj-card" data-obj="10km" onclick="selObj(this)"><div class="icon">⚡</div><div class="label">10km</div><div class="sub">Course</div></div>
-        <div class="obj-card" data-obj="5km" onclick="selObj(this)"><div class="icon">🌟</div><div class="label">5km</div><div class="sub">Débuter</div></div>
-        <div class="obj-card" data-obj="trail" onclick="selObj(this)"><div class="icon">🏔️</div><div class="label">Trail</div><div class="sub">Nature</div></div>
-        <div class="obj-card" data-obj="forme" onclick="selObj(this)"><div class="icon">💪</div><div class="label">Forme</div><div class="sub">Bien-être</div></div>
+        <div class="obj-card sel" data-obj="marathon" data-sport="running" onclick="selObj(this)"><div class="icon">🏁</div><div class="label">Marathon</div><div class="sub">42km</div></div>
+        <div class="obj-card" data-obj="semi" data-sport="running" onclick="selObj(this)"><div class="icon">🏃</div><div class="label">Semi</div><div class="sub">21km</div></div>
+        <div class="obj-card" data-obj="10km" data-sport="running" onclick="selObj(this)"><div class="icon">⚡</div><div class="label">10km</div><div class="sub">Course</div></div>
+        <div class="obj-card" data-obj="5km" data-sport="running" onclick="selObj(this)"><div class="icon">🌟</div><div class="label">5km</div><div class="sub">Débuter</div></div>
+        <div class="obj-card" data-obj="trail" data-sport="running" onclick="selObj(this)"><div class="icon">🏔️</div><div class="label">Trail</div><div class="sub">Nature</div></div>
+        <div class="obj-card" data-obj="crossfit" data-sport="crossfit" onclick="selObj(this)"><div class="icon">🏋️</div><div class="label">CrossFit</div><div class="sub">WOD</div></div>
+        <div class="obj-card" data-obj="surf" data-sport="surf" onclick="selObj(this)"><div class="icon">🏄</div><div class="label">Surf</div><div class="sub">Progresser</div></div>
+        <div class="obj-card" data-obj="velo" data-sport="velo" onclick="selObj(this)"><div class="icon">🚴</div><div class="label">Vélo</div><div class="sub">Route / VTT</div></div>
+        <div class="obj-card" data-obj="natation" data-sport="natation" onclick="selObj(this)"><div class="icon">🏊</div><div class="label">Natation</div><div class="sub">Technique</div></div>
+        <div class="obj-card" data-obj="muscu" data-sport="muscu" onclick="selObj(this)"><div class="icon">💪</div><div class="label">Muscu</div><div class="sub">Force</div></div>
+        <div class="obj-card" data-obj="boxe" data-sport="boxe" onclick="selObj(this)"><div class="icon">🥊</div><div class="label">Boxe</div><div class="sub">Combat</div></div>
+        <div class="obj-card" data-obj="forme" data-sport="forme" onclick="selObj(this)"><div class="icon">🧘</div><div class="label">Bien-être</div><div class="sub">Global</div></div>
       </div>
       <div class="field" id="date-field">
         <label>Date de ta course</label>
@@ -689,14 +695,29 @@ async function loadProfile(){
 
 // ============ ONBOARDING ============
 let onbStep=1;
-const ONB={prenom:'',objectif:'marathon',objectifDate:'',niveau:'debutant',jours:['mardi','mercredi','vendredi','dimanche'],montre:'garmin'};
+const ONB={prenom:'',objectif:'marathon',sport:'running',objectifDate:'',niveau:'debutant',jours:['mardi','mercredi','vendredi','dimanche'],montre:'garmin'};
 
 function selObj(el){
   document.querySelectorAll('.obj-card').forEach(c=>c.classList.remove('sel'));
   el.classList.add('sel');
   ONB.objectif=el.dataset.obj;
-  const showDate=['marathon','semi','10km','5km','trail'].includes(ONB.objectif);
+  ONB.sport=el.dataset.sport||'running';
+  const showDate=['marathon','semi','10km','5km','trail','velo','natation'].includes(ONB.objectif);
   document.getElementById('date-field').style.display=showDate?'flex':'none';
+  // Update step 2 labels based on sport
+  const sportLabels={
+    running:'Ton niveau running',crossfit:'Ton niveau CrossFit',
+    surf:'Ton niveau surf',velo:'Ton niveau cyclisme',
+    natation:'Ton niveau natation',muscu:'Ton niveau muscu',
+    boxe:'Ton niveau boxe',forme:'Ton niveau général'
+  };
+  const el2=document.querySelector('#onb-2 .onb-title');
+  if(el2)el2.textContent=(sportLabels[ONB.sport]||'Ton niveau')+' 📊';
+  const sportDays={
+    crossfit:['lundi','mardi','mercredi','jeudi','vendredi'],
+    surf:['samedi','dimanche'],
+    running:['mardi','mercredi','vendredi','dimanche']
+  };
 }
 function selNiv(el){document.querySelectorAll('.niv-btn').forEach(c=>c.classList.remove('sel'));el.classList.add('sel');ONB.niveau=el.dataset.niv;}
 function togDay(el){el.classList.toggle('sel');const d=el.dataset.day;if(el.classList.contains('sel')){if(!ONB.jours.includes(d))ONB.jours.push(d);}else{ONB.jours=ONB.jours.filter(j=>j!==d);}}
@@ -736,6 +757,7 @@ async function finishOnboarding(){
       id:currentUser.id,
       prenom:ONB.prenom||currentUser.user_metadata?.prenom||'Ami',
       objectif:ONB.objectif,
+      sport:ONB.sport||'running',
       objectif_date:ONB.objectifDate||null,
       niveau:ONB.niveau,
       jours_run:ONB.jours,
@@ -790,8 +812,8 @@ async function generatePlan(){
   
   try{
     const res=await fetch('/api/coach',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
-      systemPrompt:`Tu es un coach running expert. Reponds UNIQUEMENT en JSON valide, sans markdown, sans explication.`,
-      messages:[{role:'user',content:`Génère un plan running pour: objectif=${obj}, date=${date||'pas de date'}, niveau=${niv}, jours=${jours}, semaines=${weeksLeft}.
+      systemPrompt:`Tu es un coach sportif expert. Reponds UNIQUEMENT en JSON valide, sans markdown, sans explication.`,
+      messages:[{role:'user',content:`Génère un plan pour: sport=${ONB.sport||'running'}, objectif=${obj}, date=${date||'pas de date'}, niveau=${niv}, jours=${jours}, semaines=${weeksLeft}.
 Format JSON EXACT (respecte scrupuleusement cette structure):
 {"semaines":[{"s":1,"type":"Fondation","seances":[{
   "jour":"mardi",
@@ -1122,7 +1144,8 @@ async function callCoach(msg){
   const obj=userProfile?.objectif||'forme generale';
   const objDate=userProfile?.objectif_date||'pas de date';
   const niveau=userProfile?.niveau||'intermediaire';
-  const sys=`Tu es le coach personnel de ${prenom}. Objectif: ${obj} le ${objDate}. Niveau: ${niveau}. 
+  const sport=userProfile?.sport||userProfile?.objectif||'running';
+  const sys=`Tu es le coach personnel de ${prenom}. Sport: ${sport}. Objectif: ${obj} le ${objDate}. Niveau: ${niveau}. 
 Séance aujourd'hui: ${session?`${session.nom} (${session.dur})`:'Repos'}.
 État: eau ${S.water}/9, habitudes faites: ${doneH}, sommeil: ${S.sleep.dur?`${S.sleep.dur}h`:'non noté'}, FC: ${S.sleep.fc||'?'}, énergie: ${S.ratings.energie}/5, jambes: ${S.ratings.jambes}/5.
 Règles: français décontracté, 2-4 phrases max, encourage, pratique, concis. Adapte tes conseils à l'objectif ${obj}.`;
